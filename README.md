@@ -21,4 +21,4 @@
 | 'AZBWH4HLG3JWV' | '0005019281' | 5|'The acting is splendid and the story is well written'|
 | 'A2Q8O413HJZ55E' | '0005019281' | 2|'It was too contrived and predictable.'|
 
-We are working on cleaning up code and portable data process script.
+We are working on cleaning up code and portable data process script. We expect to release the all resources next month.
