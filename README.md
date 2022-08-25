@@ -23,8 +23,7 @@
 
 ![overview](imgs/model.jpg)
 
-
-#### We are improving the code and documentations, as well as adding instructions to download pre-trained checkpoints. Please stay tuned!
+#### The main implement is contained in DIS_VAE. We are improving the code and documentations, as well as adding instructions to download pre-trained checkpoints. Please stay tuned!
 ```
 @inproceedings{10.1145/3477495.3532039,
 author = {Cai, Zefeng and Cai, Zerui},
