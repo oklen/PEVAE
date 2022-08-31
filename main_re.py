@@ -1,21 +1,19 @@
 from __future__ import print_function
-
 import logging
 import os
 import json
 
-from dgmvae import evaluators, utt_utils, dialog_utils
-from dgmvae import main as main_train
-
-from dgmvae import main_aggresive as main_train_agg
-from dgmvae import main_pretrain,main_fs
-from dgmvae.dataset import corpora
-from dgmvae.dataset import data_loaders
-from dgmvae.models.dialog_models import *
-from dgmvae.utils import prepare_dirs_loggers, get_time
-from dgmvae.multi_bleu import multi_bleu_perl
-from dgmvae.options import get_parser_cond
-from dgmvae.dataset.corpora import InputFeatures
+from models import evaluators, utt_utils, dialog_utils
+from models import main as main_train
+from models import main_aggresive as main_train_agg
+from models import main_pretrain,main_fs
+from models.dataset import corpora
+from models.dataset import data_loaders
+from models.models.dialog_models import *
+from models.utils import prepare_dirs_loggers, get_time
+from models.multi_bleu import multi_bleu_perl
+from models.options import get_parser_cond
+from models.dataset.corpora import InputFeatures
 
 logger = logging.getLogger()
 
