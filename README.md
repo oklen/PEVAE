@@ -21,6 +21,32 @@
 | 'AZBWH4HLG3JWV' | '0005019281' | 5|'The acting is splendid and the story is well written'|
 | 'A2Q8O413HJZ55E' | '0005019281' | 2|'It was too contrived and predictable.'|
 
+## Requirements
+
+```
+pip install -r requirements.txt
+```
+
+## Reproduce Guides
+Experiment results will be recorded automaticly by tensorboard. Run tensorboard with 
+```tensorboard --logdir ./runs```
+
+To reproduce our results run commands:
+
+>YELP
+```
+python main_re.py --data adr --data_dir data/writePrompts --model DLS_VAE --log_dir ./logs --use_mutual False --beta 0.3  --use_attention False --init_lr 1e-4 --anneal_x0 10000  --gpu_idx 2 --target_kl 25 --improve_threshold 0.97 --batch_size 256 --warmup_steps 2000 --dropout 0.3 --ckpt_step 2000 --tau 0.5 --grad_clip 5.0 --dec_cell_size 512 --embed_size 100   --do_follow --direct_follow --data_path ./feature/yelp --teach_force_bound 50 --exp_name yelp --optim_times 5 --do_pred
+ ```
+>Amazon-Movie
+```
+python main_re.py --data adr --data_dir data/writePrompts --model DLS_VAE --log_dir ./logs --use_mutual False --beta 0.3 --use_attention False --init_lr 1e-4 --anneal_x0 10000  --gpu_idx 2 --target_kl 25 --improve_threshold 0.97 --batch_size 256 --warmup_steps 2000 --dropout 0.3 --ckpt_step 2000 --tau 0.5 --grad_clip 5.0 --dec_cell_size 512 --embed_size 100   --do_follow --direct_follow --data_path ./feature/amazon_movie --teach_force_bound 50 --exp_name amazon_movie --do_pred 
+ ```
+>Amazon-Book
+```
+python main_re.py --data adr --data_dir data/writePrompts --model DLS_VAE --log_dir ./logs --use_mutual False --beta 0.3 --use_attention False --init_lr 1e-4 --anneal_x0 10000  --gpu_idx 2 --target_kl 25 --improve_threshold 0.97 --batch_size 256 --warmup_steps 2000 --dropout 0.3 --ckpt_step 2000 --tau 0.5 --grad_clip 5.0 --dec_cell_size 512 --embed_size 100   --do_follow --direct_follow --data_path ./feature/amazon_book --teach_force_bound 50 --exp_name amazon_book --do_pred
+```
+
+
 ![overview](imgs/model.jpg)
 
 The main implements are contained in `DIS_VAE`. We are improving the code and documentations, as well as adding instructions to download pre-trained checkpoints. Please stay tuned!
