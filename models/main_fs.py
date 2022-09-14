@@ -230,7 +230,7 @@ def validate(model, valid_feed, config, batch_cnt=None, outres2file=None):
     return valid_loss, res_dict
 
 from nltk.util import ngrams
-# from rouge.rouge import rouge_n_sentence_level
+from rouge.rouge import rouge_n_sentence_level
 
 
 import collections
