@@ -1,10 +1,10 @@
 from torch._C import default_generator
-from dgmvae.utils import str2bool, process_config
+from models.utils import str2bool, process_config
 import argparse
 import logging
-import dgmvae.models.sent_models as sent_models
-import dgmvae.models.sup_models as sup_models
-import dgmvae.models.dialog_models as dialog_models
+# import dgmvae.models.sent_models as sent_models
+# import dgmvae.models.sup_models as sup_models
+import models.dialog_models as dialog_models
 
 
 def add_default_training_parser(parser):

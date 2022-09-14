@@ -5,7 +5,7 @@ import torch.nn as nn
 from torch.nn.modules.loss import _Loss
 import numpy as np
 import torch
-from dgmvae.utils import INT, FLOAT, LONG, cast_type
+from models.utils import INT, FLOAT, LONG, cast_type
 import logging
 
 

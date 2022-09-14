@@ -1,16 +1,15 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from dgmvae.dataset.corpora import PAD, BOS, EOS, UNK
+from models.dataset.corpora import PAD, BOS, EOS, UNK
 from torch.autograd import Variable
-from dgmvae import criterions
-from dgmvae.enc2dec.decoders import DecoderRNN
-from dgmvae.enc2dec.encoders import EncoderRNN, RnnUttEncoder
-from dgmvae.utils import INT, FLOAT, LONG, cast_type
-from dgmvae import nn_lib
-from dgmvae.models.model_bases import BaseModel
-from dgmvae.enc2dec.decoders import GEN, TEACH_FORCE
-from dgmvae.utils import Pack, kl_anneal_function
+from models import criterions
+from models.enc2dec.decoders import DecoderRNN
+from models.enc2dec.encoders import EncoderRNN, RnnUttEncoder
+from models.utils import INT, FLOAT, LONG, cast_type
+from models import nn_lib
+from models.enc2dec.decoders import GEN, TEACH_FORCE
+from models.utils import Pack, kl_anneal_function
 from torch.nn.utils import spectral_norm
 import itertools
 import numpy as np
@@ -18,6 +17,119 @@ import math
 import transformers
 
 
+class BaseModel(nn.Module):
+    def __init__(self, config):
+        super(BaseModel, self).__init__()
+        self.use_gpu = config.use_gpu
+        self.flush_valid = False
+        self.config = config
+        self.kl_w = 0.0
+        self.scheduler = None
+        self.optimizer = None
+
+    @staticmethod
+    def add_args(parser):
+        return parser
+
+    def np2var(self, inputs, dtype):
+        if inputs is None:
+            return None
+        return cast_type(Variable(torch.from_numpy(inputs)), dtype,
+                         self.use_gpu)
+
+    def torch2var(self, inputs):
+        if inputs is None:
+            return None
+        if self.use_gpu:
+            return Variable(inputs).cuda()
+        else:
+            return Variable(inputs)
+
+    def forward(self, *input):
+        raise NotImplementedError
+
+    def backward(self, batch_cnt, loss, step=None):
+        total_loss = self.valid_loss(loss, batch_cnt, step=step)
+        total_loss.backward()
+
+    def valid_loss(self, loss, batch_cnt=None, step = None):
+        raise NotImplemented
+        # total_loss = 0.0
+        # for key, l in loss.items():
+        #     if l is not None:
+        #         total_loss += l
+        # return total_loss
+
+    def model_sel_loss(self, loss, batch_cnt):
+        return self.valid_loss(loss, batch_cnt)
+
+    def _gather_last_out(self, rnn_outs, lens):
+        """
+        :param rnn_outs: batch_size x T_len x dimension
+        :param lens: [a list of lens]
+        :return: batch_size x dimension
+        """
+        time_dimension = 1
+        len_vars = self.np2var(np.array(lens), LONG)
+        len_vars = len_vars.view(-1, 1).expand(len(lens), rnn_outs.size(2)).unsqueeze(1)
+        slices = rnn_outs.gather(time_dimension, len_vars-1)
+        return slices.squeeze(time_dimension)
+
+    def _remove_padding(self, feats, words):
+        """"
+        :param feats: batch_size x num_words x feats
+        :param words: batch_size x num_words
+        :return: the same input without padding
+        """
+        if feats is None:
+            return None, None
+
+        batch_size = words.size(0)
+        valid_mask = torch.sign(words).float()
+        batch_lens = torch.sum(valid_mask, dim=1)
+        max_word_num = torch.max(batch_lens)
+        padded_lens = (max_word_num - batch_lens).cpu().data.numpy()
+        valid_words = []
+        valid_feats = []
+
+        for b_id in range(batch_size):
+            valid_idxs = valid_mask[b_id].nonzero().view(-1)
+            valid_row_words = torch.index_select(words[b_id], 0, valid_idxs)
+            valid_row_feat = torch.index_select(feats[b_id], 0, valid_idxs)
+
+            padded_len = int(padded_lens[b_id])
+            valid_row_words = F.pad(valid_row_words, (0, padded_len))
+            valid_row_feat = F.pad(valid_row_feat, (0, 0, 0, padded_len))
+
+            valid_words.append(valid_row_words.unsqueeze(0))
+            valid_feats.append(valid_row_feat.unsqueeze(0))
+
+        feats = torch.cat(valid_feats, dim=0)
+        words = torch.cat(valid_words, dim=0)
+        return feats, words
+
+    def get_optimizer(self, config):
+        if config.op == 'adamw':
+            no_decay = ['bias', 'LayerNorm.weight']
+            bert_compent_name = ['Bert','Transformer']
+            optimizer_grouped_parameters = [
+                {'params': [p for n, p in self.named_parameters() if not any(nd in n for nd in no_decay) and not any(nd in n for nd in bert_compent_name)], 'weight_decay': args.weight_decay},
+                {'params': [p for n, p in self.named_parameters() if any(nd in n for nd in no_decay) and not any(nd in n for nd in bert_compent_name)], 'weight_decay': 0.0},
+                {'params': [p for n, p in self.named_parameters() if not any(nd in n for nd in no_decay) and any(nd in n for nd in bert_compent_name)], 'weight_decay': args.weight_decay, 'lr':config.init_lr/10},
+                {'params': [p for n, p in self.named_parameters() if any(nd in n for nd in no_decay) and any(nd in n for nd in bert_compent_name)], 'weight_decay': 0.0, 'lr':config.init_lr/10}
+                ]
+            self.optimizer = torch.optim.AdamW(optimizer_grouped_parameters, lr=config.init_lr, eps=1e-6)
+        if config.op == 'adam':
+            self.optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad,
+                                           self.parameters()), lr=config.init_lr)
+        elif config.op == 'sgd':
+            self.optimizer =torch.optim.SGD(self.parameters(), lr=config.init_lr,
+                                   momentum=config.momentum)
+        elif config.op == 'rmsprop':
+            self.optimizer = torch.optim.RMSprop(self.parameters(), lr=config.init_lr,
+                                       momentum=config.momentum)
+        self.scheduler = transformers.get_constant_schedule_with_warmup(self.optimizer,config.warmup_steps)
+        return self.optimizer
 
 class GMMBase(BaseModel):
     def __init__(self, config):
@@ -27,7 +139,7 @@ class GMMBase(BaseModel):
 
     @staticmethod
     def add_args(parser):
-        from dgmvae.utils import str2bool
+        from models.utils import str2bool
 
         # Latent variable:
         parser.add_argument('--k', type=int, default=5, help="Latent size of discrete latent variable")
@@ -162,8 +274,29 @@ class Block(nn.Module):
 from torch.utils.data import DataLoader, RandomSampler
 import pickle
 
+class ElementwiseParams(nn.Module):
+    def __init__(self, num_params, mode='interleaved'):
+        super(ElementwiseParams, self).__init__()
+        assert mode in {'interleaved', 'sequential'}
+        self.num_params = num_params
+        self.mode = mode
 
-from dgmvae.models.module import ElementwiseParams,Flow, AffineCouplingBijection, Reverse, StandardNormal
+    def forward(self, x):
+        assert x.dim() == 2, 'Expected input of shape (B,D)'
+        if self.num_params != 1:
+            assert x.shape[1] % self.num_params == 0
+            dims = x.shape[1] // self.num_params
+            # x.shape = (bs, num_params * dims)
+            if self.mode == 'interleaved':
+                x = x.reshape(x.shape[0:1] + (self.num_params, dims))
+                # x.shape = (bs, num_params, dims)
+                x = x.permute([0,2,1])
+                # x.shape = (bs, dims, num_params)
+            elif self.mode == 'sequential':
+                x = x.reshape(x.shape[0:1] + (dims, self.num_params))
+                # x.shape = (bs, dims, num_params)
+        return x
+
 
 class Fblock(nn.Module):
     def __init__(self, input_dim,output_dim):
@@ -713,7 +846,7 @@ class FS_VAE(GMMBase):
 
 
 
-from ..gpt import *
+# from ..gpt import *
 from transformers import BertModel,BertConfig
 
 class TFS_VAE(GMMBase):

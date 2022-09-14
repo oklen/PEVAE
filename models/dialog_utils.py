@@ -1,15 +1,15 @@
 from __future__ import print_function
 
-from dgmvae import main as engine
-from dgmvae.enc2dec.decoders import GEN, DecoderRNN, TEACH_FORCE
-from dgmvae import utils
-from dgmvae.dataset.corpora import PAD, EOS, EOT, USR, SYS
+from models import main as engine
+from models.enc2dec.decoders import GEN, DecoderRNN, TEACH_FORCE
+from models import utils
+from models.dataset.corpora import PAD, EOS, EOT, USR, SYS
 import logging
 from torch.autograd import Variable
 import torch.nn.functional as F
 import numpy as np
 import pickle
-from dgmvae.main import LossManager
+from models.main import LossManager
 import torch
 
 

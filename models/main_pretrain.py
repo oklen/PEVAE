@@ -1,15 +1,15 @@
 
 from __future__ import print_function
 import numpy as np
-from dgmvae.models.model_bases import summary
+# from models.models.model_bases import summary
 import torch
-from dgmvae.dataset.corpora import PAD, EOS, EOT
-from dgmvae.enc2dec.decoders import TEACH_FORCE, GEN, DecoderRNN
-from dgmvae.utils import get_dekenize, experiment_name, kl_anneal_function
+from models.dataset.corpora import PAD, EOS, EOT
+from models.enc2dec.decoders import TEACH_FORCE, GEN, DecoderRNN
+from models.utils import get_dekenize, experiment_name, kl_anneal_function
 import os
 from collections import defaultdict
 import logging
-from dgmvae import utt_utils
+from models import utt_utils
 
 logger = logging.getLogger()
 
@@ -166,7 +166,7 @@ def train(model, train_feed, valid_feed, evaluator, config):
     train_loss = LossManager()
     model.train()
 
-    logger.info(summary(model, show_weights=False))
+    # logger.info(summary(model, show_weights=False))
     logger.info("**** Training Begins ****")
     logger.info("**** Epoch 0/{} ****".format(config.max_epoch))
     norm_bound = 300
@@ -399,7 +399,8 @@ def validate(model, valid_feed, config, batch_cnt=None, outres2file=None):
     return valid_loss, res_dict
 
 from nltk.util import ngrams
-from rouge.rouge import rouge_n_sentence_level,rouge_l_sentence_level,rouge_w_sentence_level
+# from rouge.rouge import rouge_n_sentence_level,rouge_l_sentence_level,rouge_w_sentence_level
+
 from nlgeval import NLGEval
 
 import collections

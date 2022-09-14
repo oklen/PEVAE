@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from dgmvae.utils import FLOAT, LONG, cast_type
+from models.utils import FLOAT, LONG, cast_type
 from torch.autograd import Variable, Function
 
 

@@ -1,9 +1,9 @@
 from __future__ import print_function
 import numpy as np
 from torch._C import dtype
-from dgmvae.utils import Pack
-from dgmvae.dataset.dataloader_bases import DataLoader
-from dgmvae.dataset.corpora import aNLG_feature
+from models.utils import Pack
+from models.dataset.dataloader_bases import DataLoader
+from models.dataset.corpora import aNLG_feature
 import torch
 
 

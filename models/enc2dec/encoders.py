@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from dgmvae.enc2dec.base_modules import BaseRNN
+from models.enc2dec.base_modules import BaseRNN
 import torch.nn.functional as F
 
 
