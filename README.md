@@ -5,6 +5,13 @@
 **Amazon-Book** and **Amazon-Movie** ```https://nijianmo.github.io/amazon/index.html```
 
 You have to fill out a form before downloading the data.
+## Process Data
+The following tool is used to extract explanations from reviews.
+
+```https://github.com/lileipisces/Sentires-Guide```
+
+Detailed steps to reproduce the data have been described in our paper and you can use ```models/dataset/data_filter.py``` to filter out data.
+
 ## Data Samples
 
 >YELP
