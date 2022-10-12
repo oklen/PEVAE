@@ -1,4 +1,10 @@
 # [PEVAE: A Hierarchical VAE for Personalized Explainable Recommendation](https://dl.acm.org/doi/abs/10.1145/3477495.3532039)
+## Download Origin Data
+**Yelp** ```https://www.yelp.com/dataset```
+
+**Amazon-Book** and **Amazon-Movie** ```https://nijianmo.github.io/amazon/index.html```
+
+You have to fill out a form before downloading the data.
 ## Data Samples
 
 >YELP
